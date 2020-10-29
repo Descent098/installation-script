@@ -1,5 +1,6 @@
-tqdm
-requests
+tqdm        # Used to diaply progress bars for downloads
+requests    # Used to download files over http
 pyinstaller # Used to distribute single-file binaries
-winshell    # used to setup shortcuts
-pywin32
+winshell    # Used to setup shortcuts
+pywin32     # Used to setup shortcuts
+elevate     # Provides Graphical hooks for linux and Macos permission elevation

@@ -1,23 +1,25 @@
 
 # Standard Library Dependencies
-import os                       # Used for path validation
-import logging                  # Used for optional logging details
-import subprocess               # Used to invoke installer binaries
-from shutil import copyfile     # Used to copy files between directories
-from sys import platform, argv  # Used to validate which os script is on, and how many arguments at terminal
+import os                             # Used for path validation
+import sys                            # Used to access info about system
+import logging                        # Used for optional logging details               
+import traceback                      # Used to log error details on raise
+import subprocess                     # Used to invoke any necessary binaries
+from shutil import copyfile           # Used to copy files between directories
 
 # Third-Party Dependencies
-import requests                 # Used to download files
-from tqdm import tqdm           # Used to generate progress bar on donwloads
-import winshell                 # Allows execution of built-in windows shell functions
-from win32com.client import Dispatch  # Instantiate COM objects to dispatch through
+import winshell                       # Allows execution of winshell functions
+import requests                       # Used to download any necessary binary files
+from tqdm import tqdm                 # Used to generate a progress bar on donwloads
+from elevate import elevate           # Forces sudo through a gui on linux & MacOS systems
+from win32com.client import Dispatch  # Instantiate COM objects to dispatch any tasks through
 
 # Setting up Constants
 
 #  OS name booleans
-mac = True if platform == "darwin" else False
+mac = True if sys.platform == "darwin" else False
 windows = True if os.name == "nt" else False
-linux = True if platform == "linux" or platform == "linux2" else False
+linux = True if sys.platform == "linux" or sys.platform == "linux2" else False
 
 # Instalation and download folders
 DOWNLOAD_FOLDER = f"{os.getenv('USERPROFILE')}\\Downloads" if windows else f"{os.getenv('HOME')}/Downloads"
@@ -26,11 +28,14 @@ DOCUMENTS_FOLDER = f"{os.getenv('USERPROFILE')}\\Documents" if windows else f"{o
 
 # Executable paths
 if windows:
-    PIP_EXECUTABLE = os.path.realpath(f"{os.environ['LocalAppData']}\\Programs\\Python\\Python38\\Scripts\\pip.exe")
-    JUPYTER_EXECUTABLE = os.path.realpath(f"{os.environ['LocalAppData']}\\Programs\\Python\\Python38\\Scripts\\jupyter.exe")
-    JUPYTER_LAB_EXECUTABLE = os.path.realpath(f"{os.environ['LocalAppData']}\\Programs\\Python\\Python38\\Scripts\\jupyter-lab.exe")
+    PIP_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\pip.exe")
+    JUPYTER_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\jupyter.exe")
+    JUPYTER_LAB_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\jupyter-lab.exe")
 else:
-    PIP_EXECUTABLE = "python3.8 -m pip"
+    elevate(show_console=False) # Displays a popup window to give script sudo access
+    PIP_EXECUTABLE = "python3.8"
+    JUPYTER_EXECUTABLE = "jupyter"       # Don't know enough about macos to make version specific
+    JUPYTER_LAB_EXECUTABLE = "jupyter-lab" # Don't know enough about macos to make version specific
 
 
 def _download(name, url, extension) -> str:
@@ -76,35 +81,60 @@ def step_1():
     print("Entering Step 1; Install Python 3.8.6")
     logging.debug("Entering Step 1; Install Python 3.8.6")
     if windows:
-        exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-amd64.exe", ".exe") 
-        _install(exc_path, ["/quiet", "PrependPath=1"])
-        os.remove(exc_path)
+        if os.path.exists(PIP_EXECUTABLE):
+            logging.debug("Python and pip already isntalled, skipping python installation")
+        else:
+            exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-amd64.exe", ".exe") 
+            _install(exc_path, ["/quiet", "PrependPath=1", "InstallAllUsers=1"])
+            os.remove(exc_path)
     elif linux:
         ...
     elif mac:
-        ...
+        # TODO: add check for if python and pip are already installed
+        exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-macosx10.9.pkg", ".pkg")
+        subprocess.call(["installer", "-pkg", exc_path, "-target" "~"]) # Install python 3.8.6
 
 def step_2():
     """Install NodeJS"""
     print("Entering Step 2; Install NodeJS")
     logging.debug("Entering Step 2; Install NodeJS")
     if windows:
-        exc_path = _download("node", "https://nodejs.org/dist/v12.19.0/node-v12.19.0-x64.msi", ".msi")
-        # Can't use _install() because need to use msi tools
-        subprocess.call(["msiexec.exe", "/i", exc_path, "/passive" ], shell=True)
-        os.remove(exc_path)
+        if os.path.exists(os.path.realpath(f"{os.environ['ProgramFiles']}\\nodejs")):
+            logging.debug("NPM and nodeJS already installed, skipping installation")
+        else:
+            exc_path = _download("node", "https://nodejs.org/dist/v12.19.0/node-v12.19.0-x64.msi", ".msi")
+            # Can't use _install() because need to use msi tools
+            subprocess.Popen(f'msiexec.exe /i {exc_path} ADDLOCAL=\"DocumentationShortcuts,EnvironmentPathNode,EnvironmentPathNpmModules,npm,NodeRuntime,EnvironmentPath\" /passive',
+            universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
+            from tkinter import Tk, Label
+            from tkinter import messagebox 
+            
+            root = Tk() 
+            root.geometry("500x500") 
+
+
+            details = Label(root, text ='Please close this window and re-run install.exe to finalize installation', font = "50")  
+            details.pack()
+            root.mainloop()
+
+            os.remove(exc_path)
+            sys.exit()
     elif linux:
         ...
     elif mac:
-        exc_path = _download("node", "https://nodejs.org/dist/v12.19.0/node-v12.19.0.pkg", ".pkg")
+        try:# TODO: Validate this works
+            subprocess.call(["npm"]) 
+            logging.debug("NPM and nodeJS already installed, skipping installation")
+        except FileNotFoundError:
+            exc_path = _download("node", "https://nodejs.org/dist/v12.19.0/node-v12.19.0.pkg", ".pkg")
+            subprocess.call(["installer", "-pkg", exc_path, "-target" "~"]) # Install nodejs
 
 def step_3_to_6():
     """Install pip packages; jupyterlab, ipywidgets, ipycanvas, ipyevents, spark"""
     print("Entering Steps 3-6; Install Python and Jupyterlab Packages")
     logging.debug("Entering Steps 3-6; Install Python and Jupyterlab Packages")
 
-    # Updating pip
-    subprocess.call([PIP_EXECUTABLE, "install","--user", "--upgrade", "pip"], shell=True)
 
     logging.info("Installing pip packages")
     for package in ["jupyterlab", "ipywidgets", "ipycanvas", "ipyevents"]:
@@ -119,24 +149,15 @@ def step_3_to_6():
         logging.debug(f"Installing JupyterLab package {jupyter_package} with jupyter executable {JUPYTER_EXECUTABLE}")
         subprocess.call([JUPYTER_EXECUTABLE, "labextension", "install", "@jupyter-widgets/jupyterlab-manager", jupyter_package], shell=True)
 
+    subprocess.call([JUPYTER_EXECUTABLE, "lab", "build"])
     logging.debug("Finished installing all pip and jupyter packages")
 
 def step_7():
     """Install the spark package for use in jupyterlab"""
-    # Install git
-    if windows:
-        exc_path = _download("git", "https://github.com/git-for-windows/git/releases/download/v2.28.0.windows.1/Git-2.28.0-64-bit.exe", ".exe")
-        _install(exc_path, ["/VERYSILENT", "/NORESTART"])
-        os.remove(exc_path)
-    elif linux:
-        subprocess.call(["sudo", "apt", "update"])
-        subprocess.call(["sudo", "apt", "install", "git", "-y"])
-    else: # Mac OS is guarenteed to have git installed
-        ...
-
     print("Entering Step 7; Install Spark")
     logging.debug("Entering Step 7; Install Spark")
-    subprocess.call([PIP_EXECUTABLE, "install", "git+https://github.com/Schulich-Ignite/spark"], shell=True)
+    subprocess.call([PIP_EXECUTABLE, "install", "schulich-ignite"], shell=True)
+
 
 def step_8_to_9():
     """Create a folder in the documents folder called ignite_notebooks with a default notebook called ignite.ipynb"""
@@ -153,9 +174,12 @@ def step_8_to_9():
     # Create default notebook file
     if not os.path.exists(f"{DOCUMENTS_FOLDER}{os.sep}ignite_notebooks{os.sep}ignite.ipynb"):
         logging.debug("No default notebook found, initializing")
-        copyfile("ignite.ipynb",f"{DOCUMENTS_FOLDER}{os.sep}ignite_notebooks{os.sep}ignite.ipynb")
+        template_file = _download("ignite", "https://raw.githubusercontent.com/Descent098/installation-script/master/ignite.ipynb", ".ipynb")
+        copyfile(template_file,f"{DOCUMENTS_FOLDER}{os.sep}ignite_notebooks{os.sep}ignite.ipynb")
     else:
         logging.debug("Default notebook found, skipping creation")
+
+    subprocess.call([JUPYTER_EXECUTABLE, "trust", f"{DOCUMENTS_FOLDER}{os.sep}ignite_notebooks{os.sep}ignite.ipynb"])
 
 def step_10():
     """Adds an ignite icon to the desktop for easy launching"""
@@ -187,22 +211,53 @@ def step_10():
         logging.debug("Flushing shortcut")
         shortcut.save() # Flush shortcut to the desktop
 
+
+class SysLogger:
+    # Adapted from https://stackoverflow.com/a/31688396/11602400
+    def __init__(self, level):
+        self.level = level # Define the log level for logs from stream
+
+    def write(self, message):
+        """Writes the message to the instance
+
+        Parameters
+        ----------
+        message : str
+            The incomming message from the stream
+        """
+        if message != '\n':
+            self.level(message)
+
+    def flush(self):
+        """Flush all messages to the logs"""
+        self.level(sys.stderr)
+
 def main():
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s %(levelname)-8s %(message)s",
         datefmt="%y-%m-%d %H:%M:%S",
         handlers=[logging.FileHandler("ignite_install.log"),
-                        logging.StreamHandler()]
+                        logging.StreamHandler()] # TODO: Remove on launch
         )
         
     logger = logging.getLogger(__name__)
-    step_1()
-    step_2()
-    step_3_to_6()
-    step_7()
-    step_8_to_9()
-    step_10()
+    sys.stdout = SysLogger(logger.debug)
+    sys.stderr = SysLogger(logger.warning)
+
+    
+    try:
+
+        step_1()
+        step_2()
+        step_3_to_6()
+        step_7()
+        step_8_to_9()
+        step_10()
+
+    except Exception as identifier:
+        logging.error(f"{identifier}: {traceback.format_exc()}")
+        sys.exit()
 
 if __name__ == "__main__":
     main()

@@ -7,6 +7,9 @@ import traceback                      # Used to log error details on raise
 import subprocess                     # Used to invoke any necessary binaries
 from shutil import copyfile           # Used to copy files between directories
 
+# Used to grab all installed pip packages
+from pip._internal.utils.misc import get_installed_distributions
+
 # Third-Party Dependencies
 import winshell                       # Allows execution of winshell functions
 import requests                       # Used to download any necessary binary files
@@ -31,10 +34,13 @@ if windows:
     PIP_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\pip.exe")
     JUPYTER_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\jupyter.exe")
     JUPYTER_LAB_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\jupyter-lab.exe")
+
+    # The path for PIP to find the python 3.8.6 installed packages
+    WORKING_PATH = ['', f'{os.environ["ProgramFiles"]}\\Python38\\python38.zip', f'{os.environ["ProgramFiles"]}\\Python38\\DLLs', f'{os.environ["ProgramFiles"]}\\Python38\\lib', f'{os.environ["ProgramFiles"]}\\Python38', 'C:\\Users\\Kieran\\AppData\\Roaming\\Python\\Python38\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32\\lib', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\Pythonwin']
 else:
     elevate(show_console=False) # Displays a popup window to give script sudo access
-    PIP_EXECUTABLE = "python3.8"
-    JUPYTER_EXECUTABLE = "jupyter"       # Don't know enough about macos to make version specific
+    PIP_EXECUTABLE = "pip3"
+    JUPYTER_EXECUTABLE = "jupyter"         # Don't know enough about macos to make version specific
     JUPYTER_LAB_EXECUTABLE = "jupyter-lab" # Don't know enough about macos to make version specific
 
 
@@ -135,11 +141,16 @@ def step_3_to_6():
     print("Entering Steps 3-6; Install Python and Jupyterlab Packages")
     logging.debug("Entering Steps 3-6; Install Python and Jupyterlab Packages")
 
+    # Get a list of all the installed pip package names
+    pip_packages = [package.project_name for package in get_installed_distributions(paths=WORKING_PATH)]
 
     logging.info("Installing pip packages")
     for package in ["jupyterlab", "ipywidgets", "ipycanvas", "ipyevents"]:
-        logging.debug(f"Installing pip package {package} with pip executable {PIP_EXECUTABLE}")
-        subprocess.call([PIP_EXECUTABLE, "install", package], shell=True)
+        if package in pip_packages:
+            logging.debug(f"{package} already installed, skipping")
+        else:
+            logging.debug(f"Installing pip package {package} with pip executable {PIP_EXECUTABLE}")
+            subprocess.call([PIP_EXECUTABLE, "install", package], shell=True)
 
     logging.debug("Installing ipywidgets")
     subprocess.call([JUPYTER_EXECUTABLE, "labextension", "install", f"@jupyter-widgets/jupyterlab-manager"], shell=True)
@@ -247,7 +258,6 @@ def main():
 
     
     try:
-
         step_1()
         step_2()
         step_3_to_6()

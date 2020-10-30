@@ -36,3 +36,9 @@ Below are the details for creating/updating binary distributions available in [r
 
 1. Run ```pyinstaller install_win.spec```
 2. Binary is available at ```dist/install.exe```
+
+
+## Known issues
+- If you have jupyter or jupyter-lab installed on a python version other than 3.8.6 please uninstall them before running the script
+- If you have anaconda installed, please uninstall it. It locks the installation of jupyter and doesn't allow other python versions to install it.
+

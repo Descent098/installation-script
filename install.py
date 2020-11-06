@@ -11,11 +11,9 @@ from shutil import copyfile           # Used to copy files between directories
 from pip._internal.utils.misc import get_installed_distributions
 
 # Third-Party Dependencies
-import winshell                       # Allows execution of winshell functions
 import requests                       # Used to download any necessary binary files
 from tqdm import tqdm                 # Used to generate a progress bar on donwloads
 from elevate import elevate           # Forces sudo through a gui on linux & MacOS systems
-from win32com.client import Dispatch  # Instantiate COM objects to dispatch any tasks through
 
 # Setting up Constants
 
@@ -34,6 +32,9 @@ if windows:
     PIP_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\pip.exe")
     JUPYTER_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\jupyter.exe")
     JUPYTER_LAB_EXECUTABLE = os.path.realpath(f"{os.environ['ProgramFiles']}\\Python38\\Scripts\\jupyter-lab.exe")
+
+    import winshell                       # Allows execution of winshell functions
+    from win32com.client import Dispatch  # Instantiate COM objects to dispatch any tasks through
 
     # The path for PIP to find the python 3.8.6 installed packages
     WORKING_PATH = ['', f'{os.environ["ProgramFiles"]}\\Python38\\python38.zip', f'{os.environ["ProgramFiles"]}\\Python38\\DLLs', f'{os.environ["ProgramFiles"]}\\Python38\\lib', f'{os.environ["ProgramFiles"]}\\Python38', 'C:\\Users\\Kieran\\AppData\\Roaming\\Python\\Python38\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32\\lib', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\Pythonwin']
@@ -98,7 +99,7 @@ def step_1():
     elif mac:
         # TODO: add check for if python and pip are already installed
         exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-macosx10.9.pkg", ".pkg")
-        #subprocess.call(["installer", "-pkg", exc_path, "-target" "~"]) # Install python 3.8.6
+        #subprocess.call(["installer", "-pkg", exc_path, "-target" "~ "]) # Install python 3.8.6
         subprocess.Popen(f'installer -pkg {exc_path} -target /Applications',
             universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
@@ -261,11 +262,11 @@ def main():
     
     try:
         step_1()
-        step_2()
-        step_3_to_6()
-        step_7()
-        step_8_to_9()
-        step_10()
+        # step_2()
+        # step_3_to_6()
+        # step_7()
+        # step_8_to_9()
+        # step_10()
 
     except Exception as identifier:
         logging.error(f"{identifier}: {traceback.format_exc()}")

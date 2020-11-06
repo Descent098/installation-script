@@ -254,10 +254,11 @@ def main():
         handlers=[logging.FileHandler("ignite_install.log"),
                         logging.StreamHandler()] # TODO: Remove on launch
         )
-        
-    logger = logging.getLogger(__name__)
-    sys.stdout = SysLogger(logger.debug)
-    sys.stderr = SysLogger(logger.warning)
+    
+    if not mac:
+        logger = logging.getLogger(__name__)
+        sys.stdout = SysLogger(logger.debug)
+        sys.stderr = SysLogger(logger.warning)
 
     
     try:

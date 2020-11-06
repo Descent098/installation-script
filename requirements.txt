@@ -1,6 +1,6 @@
 tqdm        # Used to diaply progress bars for downloads
 requests    # Used to download files over http
 pyinstaller # Used to distribute single-file binaries
-winshell    # Used to setup shortcuts
-pywin32     # Used to setup shortcuts
+winshell; sys_platform=="win32"    # Used to setup shortcuts on windows
+pywin32; sys_platform=="win32"     # Used to setup shortcuts on windows
 elevate     # Provides Graphical hooks for linux and Macos permission elevation

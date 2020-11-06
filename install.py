@@ -100,7 +100,7 @@ def step_1():
         # TODO: add check for if python and pip are already installed
         exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-macosx10.9.pkg", ".pkg")
         #subprocess.call(["installer", "-pkg", exc_path, "-target" "~ "]) # Install python 3.8.6
-        subprocess.Popen(f'installer -pkg {exc_path} -target /Applications',
+        subprocess.Popen(f'installer -pkg {exc_path} -target /Applications -dumplog ./python-install.log',
             universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
 def step_2():

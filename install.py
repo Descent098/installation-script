@@ -43,6 +43,8 @@ elif mac:
     PIP_EXECUTABLE = os.path.realpath("/usr/local/bin/pip3.8")
     JUPYTER_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter")
     JUPYTER_LAB_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter-lab")
+    WORKING_PATH = ['', '/Library/Frameworks/Python.framework/Versions/3.8/lib/python38.zip', '/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8', '/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/lib-dynload', '/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages']
+
 else:
     elevate(show_console=False) # Displays a popup window to give script sudo access
     PIP_EXECUTABLE = "pip3"
@@ -276,9 +278,9 @@ def main():
     try:
         step_1()
         step_2()
-        # step_3_to_6()
-        # step_7()
-        # step_8_to_9()
+        step_3_to_6()
+        step_7()
+        step_8_to_9()
         # step_10()
 
     except Exception as identifier:

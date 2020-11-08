@@ -40,6 +40,7 @@ if windows:
     WORKING_PATH = ['', f'{os.environ["ProgramFiles"]}\\Python38\\python38.zip', f'{os.environ["ProgramFiles"]}\\Python38\\DLLs', f'{os.environ["ProgramFiles"]}\\Python38\\lib', f'{os.environ["ProgramFiles"]}\\Python38', 'C:\\Users\\Kieran\\AppData\\Roaming\\Python\\Python38\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32\\lib', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\Pythonwin']
 
 elif mac:
+    elevate(show_console=False) # Displays a popup window to give script sudo access
     PIP_EXECUTABLE = os.path.realpath("/usr/local/bin/pip3.8")
     JUPYTER_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter")
     JUPYTER_LAB_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter-lab")

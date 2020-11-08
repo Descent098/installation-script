@@ -40,7 +40,6 @@ if windows:
     WORKING_PATH = ['', f'{os.environ["ProgramFiles"]}\\Python38\\python38.zip', f'{os.environ["ProgramFiles"]}\\Python38\\DLLs', f'{os.environ["ProgramFiles"]}\\Python38\\lib', f'{os.environ["ProgramFiles"]}\\Python38', 'C:\\Users\\Kieran\\AppData\\Roaming\\Python\\Python38\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32\\lib', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\Pythonwin']
 
 elif mac:
-    elevate(show_console=False) # Displays a popup window to give script sudo access
     PIP_EXECUTABLE = os.path.realpath("/usr/local/bin/pip3.8")
     JUPYTER_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter")
     JUPYTER_LAB_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter-lab")
@@ -106,6 +105,8 @@ def step_1():
         if os.path.exists(PIP_EXECUTABLE):
             logging.debug("Python and pip already isntalled, skipping python installation")
         else:
+            elevate(show_console=False) # Displays a popup window to give script sudo access
+            logger = logging.getLogger(__name__) # Reinstantiate logger
             exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-macosx10.9.pkg", ".pkg")
             out, err = subprocess.Popen(f'installer -pkg {exc_path} -target /',
                 universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
@@ -140,10 +141,11 @@ def step_2():
     elif linux:
         ...
     elif mac:
-        try:# TODO: Validate this works
-            subprocess.call(["npm"]) 
+        if os.path.exists("/usr/local/bin/npm"):
             logging.debug("NPM and nodeJS already installed, skipping installation")
-        except FileNotFoundError:
+        else:
+            elevate(show_console=False) # Displays a popup window to give script sudo access
+            logger = logging.getLogger(__name__) # Reinstantiate logger
             exc_path = _download("node", "https://nodejs.org/dist/v12.19.0/node-v12.19.0.pkg", ".pkg")
             out, err = subprocess.Popen(f'installer -pkg {exc_path} -target /',
                 universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()

@@ -38,6 +38,11 @@ if windows:
 
     # The path for PIP to find the python 3.8.6 installed packages
     WORKING_PATH = ['', f'{os.environ["ProgramFiles"]}\\Python38\\python38.zip', f'{os.environ["ProgramFiles"]}\\Python38\\DLLs', f'{os.environ["ProgramFiles"]}\\Python38\\lib', f'{os.environ["ProgramFiles"]}\\Python38', 'C:\\Users\\Kieran\\AppData\\Roaming\\Python\\Python38\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\win32\\lib', f'{os.environ["ProgramFiles"]}\\Python38\\lib\\site-packages\\Pythonwin']
+
+elif mac:
+    PIP_EXECUTABLE = os.path.realpath("/usr/local/bin/pip3.8")
+    JUPYTER_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter")
+    JUPYTER_LAB_EXECUTABLE = os.path.realpath("/usr/local/bin/jupyter-lab")
 else:
     elevate(show_console=False) # Displays a popup window to give script sudo access
     PIP_EXECUTABLE = "pip3"
@@ -97,13 +102,13 @@ def step_1():
     elif linux:
         ...
     elif mac:
-        # TODO: add check for if python and pip are already installed
-        exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-macosx10.9.pkg", ".pkg")
-        #subprocess.call(["installer", "-pkg", exc_path, "-target" "~ "]) # Install python 3.8.6
-        out, err = subprocess.Popen(f'installer -pkg {exc_path} -target /Applications -dumplog python-install.log',
-            universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-
-        print(out, err)
+        if os.path.exists(PIP_EXECUTABLE):
+            logging.debug("Python and pip already isntalled, skipping python installation")
+        else:
+            exc_path = _download("python-installer", "https://www.python.org/ftp/python/3.8.6/python-3.8.6-macosx10.9.pkg", ".pkg")
+            out, err = subprocess.Popen(f'installer -pkg {exc_path} -target /',
+                universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+            print(out, err)
 
 def step_2():
     """Install NodeJS"""
@@ -139,7 +144,9 @@ def step_2():
             logging.debug("NPM and nodeJS already installed, skipping installation")
         except FileNotFoundError:
             exc_path = _download("node", "https://nodejs.org/dist/v12.19.0/node-v12.19.0.pkg", ".pkg")
-            subprocess.call(["installer", "-pkg", exc_path, "-target" "~"]) # Install nodejs
+            out, err = subprocess.Popen(f'installer -pkg {exc_path} -target /',
+                universal_newlines=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+            print(out, err)
 
 def step_3_to_6():
     """Install pip packages; jupyterlab, ipywidgets, ipycanvas, ipyevents, spark"""
@@ -265,7 +272,7 @@ def main():
 
     try:
         step_1()
-        # step_2()
+        step_2()
         # step_3_to_6()
         # step_7()
         # step_8_to_9()
